@@ -11,22 +11,8 @@
 #
 
 class Patient < ApplicationRecord
-  after_update :record_changes
+  include Loggable
 
-  has_many :activity_logs, as: :loggable
-
-  def record_changes
-    self.activity_logs.create(changes_hash: self.changes)
-  end
-
-  def undo(steps=1)
-    reset_to self.activity_logs.last(steps).first
-  end
-
-  def reset_to(activity_log)
-    activity_log.changes_hash.except("updated_at").each {|k, v| self[k] = v.first}
-    self
-  end
-
+  validates :first_name, :last_name, presence: true
 
 end
