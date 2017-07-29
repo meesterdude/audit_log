@@ -4,8 +4,8 @@ module Loggable
   extend ActiveSupport::Concern
 
   included do
-    has_many :activity_logs, as: :loggable
-    after_update :record_changes
+    has_many :activity_logs, -> { order(created_at: :asc) }, as: :loggable
+    after_save :record_changes
   end
 
   # records any changes made to self
@@ -24,10 +24,12 @@ module Loggable
   # Returns:
   # Modified self with previous values altered
   def undo(steps=nil)
-    @steps ||= 0
+    @steps ||= 1
     @steps += 1 unless steps
     reset_to self.activity_logs.last(steps || @steps).first
   end
+
+  private
 
   # Resets self to be the previous version stored in a given activity_log
   #
@@ -37,7 +39,7 @@ module Loggable
   # Returns:
   #  self with modified attributes
   def reset_to(activity_log)
-    activity_log.changes_hash.except("updated_at").each {|k, v| self[k] = v.first}
+    activity_log.changes_hash.except("updated_at").each {|k, v| self[k] = v.last}
     self
   end
 
